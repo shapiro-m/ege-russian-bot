@@ -445,11 +445,24 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 def main():
     """Запуск бота"""
+    # Получаем токен из переменных окружения
     token = os.getenv('TELEGRAM_TOKEN')
     
     if not token:
         logger.error("TELEGRAM_TOKEN не установлен!")
         return
+    
+    # Создаем приложение
+    application = Application.builder().token(token).build()
+    
+    # Регистрируем обработчики
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CallbackQueryHandler(button_handler))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, text_handler))
+    
+    # Запускаем бота
+    logger.info("Бот запущен!")
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
     
     application = Application.builder().token(token).build()
     
