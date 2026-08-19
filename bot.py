@@ -445,6 +445,31 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await start(update, context)
 
+class HealthHandler(BaseHTTPRequestHandler):
+    """Обработчик для health check"""
+    def do_GET(self):
+        if self.path == '/health':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(b'OK')
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def log_message(self, format, *args):
+        """Отключаем логирование запросов"""
+        pass
+
+def start_health_server():
+    """Запуск сервера для health check"""
+    try:
+        server = HTTPServer(('0.0.0.0', 10000), HealthHandler)
+        logger.info("Health check server запущен на порту 10000")
+        server.serve_forever()
+    except Exception as e:
+        logger.error(f"Ошибка запуска health check сервера: {e}")
+
 def main():
     """Запуск бота"""
     # Получаем токен из переменных окружения
@@ -453,6 +478,10 @@ def main():
     if not token:
         logger.error("TELEGRAM_TOKEN не установлен!")
         return
+    
+    # Запускаем health check сервер в отдельном потоке
+    health_thread = threading.Thread(target=start_health_server, daemon=True)
+    health_thread.start()
     
     # Создаем приложение
     application = Application.builder().token(token).build()
@@ -464,21 +493,6 @@ def main():
     
     # Запускаем бота
     logger.info("Бот запущен!")
-    
-    # Исправление для Python 3.14
-    import asyncio
-    try:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
-    except RuntimeError:
-        # Для старых версий Python
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
-    finally:
-        try:
-            loop.close()
-        except:
-            pass
-
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 if __name__ == '__main__':
     main()
