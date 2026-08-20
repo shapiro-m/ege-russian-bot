@@ -1,6 +1,7 @@
 import os
 import logging
 import json
+import asyncio
 from typing import Dict, List
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
@@ -507,10 +508,16 @@ def main():
     # Запускаем бота
     logger.info("Бот запущен!")
     
+    # Исправление для Python 3.14 - создаем event loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    
     try:
-        application.run_polling(allowed_updates=Update.ALL_TYPES)
+        loop.run_until_complete(application.run_polling(allowed_updates=Update.ALL_TYPES))
     except Exception as e:
         logger.error(f"Ошибка запуска бота: {e}")
+    finally:
+        loop.close()
 
 if __name__ == '__main__':
     main()
