@@ -32,6 +32,32 @@ class UserState:
         self.mode = None
         self.current_task = None
 
+class HealthHandler(BaseHTTPRequestHandler):
+    """Обработчик для health check"""
+    def do_GET(self):
+        if self.path == '/health' or self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/plain')
+            self.end_headers()
+            self.wfile.write(b'OK')
+        else:
+            self.send_response(404)
+            self.end_headers()
+    
+    def log_message(self, format, *args):
+        """Отключаем логирование запросов"""
+        pass
+
+def start_health_server():
+    """Запуск сервера для health check"""
+    try:
+        port = int(os.getenv('PORT', 10000))
+        server = HTTPServer(('0.0.0.0', port), HealthHandler)
+        logger.info(f"Health check server запущен на порту {port}")
+        server.serve_forever()
+    except Exception as e:
+        logger.error(f"Ошибка запуска health check сервера: {e}")
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик команды /start"""
     user_id = update.effective_user.id
@@ -323,7 +349,19 @@ async def show_hint(update: Update, context: ContextTypes.DEFAULT_TYPE):
         5: "Вспомните значения паронимов и их сочетаемость с другими словами.",
         6: "Проверьте формы множественного числа существительных и степени сравнения прилагательных.",
         7: "Определите тип грамматической ошибки: согласование, управление, причастный оборот.",
-        8: "Вспомните правила чередования гласных в корне: -гар-/-гор-, -зар-/-зор-, -кас-/-кос-."
+        8: "Вспомните правила чередования гласных в корне: -гар-/-гор-, -зар-/-зор-, -кас-/-кос-.",
+        9: "Обратите внимание на правописание приставок пре-/при-.",
+        10: "Вспомните правила написания суффиксов причастий.",
+        11: "Определите спряжение глагола.",
+        12: "Вспомните правила написания НЕ с разными частями речи.",
+        13: "Различайте производные предлоги и существительные с предлогами.",
+        14: "Вспомните правила написания Н и НН в прилагательных и причастиях.",
+        15: "Обратите внимание на однородные члены и обособленные обороты.",
+        16: "Найдите причастные и деепричастные обороты.",
+        17: "Вводные слова выделяются запятыми.",
+        18: "Обращения выделяются запятыми.",
+        19: "Определите границы частей сложного предложения.",
+        20: "Расставьте знаки между частями сложного предложения."
     }
     
     hint_text += hints.get(question['task_number'], "Внимательно прочитайте вопрос и все варианты ответов.")
@@ -445,31 +483,6 @@ async def text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await start(update, context)
 
-class HealthHandler(BaseHTTPRequestHandler):
-    """Обработчик для health check"""
-    def do_GET(self):
-        if self.path == '/health':
-            self.send_response(200)
-            self.send_header('Content-type', 'text/plain')
-            self.end_headers()
-            self.wfile.write(b'OK')
-        else:
-            self.send_response(404)
-            self.end_headers()
-    
-    def log_message(self, format, *args):
-        """Отключаем логирование запросов"""
-        pass
-
-def start_health_server():
-    """Запуск сервера для health check"""
-    try:
-        server = HTTPServer(('0.0.0.0', 10000), HealthHandler)
-        logger.info("Health check server запущен на порту 10000")
-        server.serve_forever()
-    except Exception as e:
-        logger.error(f"Ошибка запуска health check сервера: {e}")
-
 def main():
     """Запуск бота"""
     # Получаем токен из переменных окружения
@@ -493,6 +506,11 @@ def main():
     
     # Запускаем бота
     logger.info("Бот запущен!")
-    application.run_polling(allowed_updates=Update.ALL_TYPES)
+    
+    try:
+        application.run_polling(allowed_updates=Update.ALL_TYPES)
+    except Exception as e:
+        logger.error(f"Ошибка запуска бота: {e}")
+
 if __name__ == '__main__':
     main()
