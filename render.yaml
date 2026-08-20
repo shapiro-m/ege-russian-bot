@@ -4,9 +4,11 @@ services:
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: python bot.py
+    healthCheckPath: /health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.11
       - key: TELEGRAM_TOKEN
         sync: false
+      - key: PORT
+        value: 10000
     plan: free
+    autoDeploy: true
