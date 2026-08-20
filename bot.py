@@ -2,12 +2,12 @@ import os
 import logging
 import json
 from typing import Dict, List
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import threading
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from questions_loader import QuestionsLoader
 import random
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import threading
 
 # Настройка логирования
 logging.basicConfig(
